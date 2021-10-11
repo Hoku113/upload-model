@@ -2,7 +2,7 @@ import logging
 import azure.functions as func
 import os
 from DBhelp.MySQL.mysql import Mysql
-from DBhelp.CosmosDB.cosmosdb import CosmosDB
+from DBhelp.CosmosDB.cosmosdb import CosmosDB, getItem
 from Blobhelp.blob import Blob
  
 
@@ -20,6 +20,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         upload_user = req.params.get('upload_user')
         model_info_cosmos_address = req.params.get('model_info_cosmos_address')
         blob_address = req.params.get('blob_address')
+        description = req.params.get('description')
 
         if method != 'POST':
             logging.warning(f'Application error')
@@ -36,7 +37,9 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         blob.upload(blob_address, rename_model)
         logging.info("Done!")
 
-        mysql.insert(model_name, model_id, upload_user, model_info_cosmos_address, blob_address)
+        cosmos.create_item(getItem(rename_model, description=description))
+
+        mysql.insert(rename_model, model_id, upload_user, model_info_cosmos_address, blob_address)
 
         # disconnect mySQL
         mysql.disconnect()
